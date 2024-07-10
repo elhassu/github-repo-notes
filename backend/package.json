@@ -1,0 +1,21 @@
+{
+	"name": "github-repo-notes-backend",
+	"version": "1.0.0",
+	"description": "",
+	"type": "module",
+	"main": "app.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "npm run build && node --env-file=.env ./dist/index.js",
+    "build": "tsc"
+	},
+	"author": "Keelan Vella <keelan@elhassu.com>",
+	"devDependencies": {
+		"@types/express": "^4.17.21",
+		"@types/node": "^20.14.10",
+		"typescript": "^5.5.3"
+	},
+	"dependencies": {
+		"express": "^4.19.2"
+	}
+}
