@@ -1,6 +1,5 @@
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { useState } from "react";
 import Navigation from "./Navigation";
 
 import { IUser } from "../../types/types";
@@ -53,7 +52,6 @@ export default function MobileNavbar({ user, sidebarOpen, setSidebarOpen }: Mobi
 						</div>
 						<nav className='flex flex-1 flex-col'>
 							<ul
-								role='list'
 								className='flex flex-1 flex-col gap-y-7'>
 								<li>
                                     <Navigation />
@@ -62,6 +60,7 @@ export default function MobileNavbar({ user, sidebarOpen, setSidebarOpen }: Mobi
 									<a
 										href={user?.html_url}
 										target='_blank'
+                                        rel="noreferrer"
 										className='flex items-center gap-x-4 px-6 py-3 text-sm font-semibold leading-6 text-white/75 hover:bg-gray-800'>
 										<img
 											alt={"Your profile's avatar"}

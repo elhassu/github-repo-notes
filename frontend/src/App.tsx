@@ -2,6 +2,7 @@ import "./App.scss";
 import MobileNavbar from "./components/common/MobileNavbar";
 import Navbar from "./components/common/Navbar";
 import TopBar from "./components/common/TopBar";
+import RepositoryList from "./components/list/RepositoryList";
 import OrganisationOverview from "./components/organisation/Overview";
 import {useToggleSidebar} from "./hooks/UIHooks";
 import {IOrganisation, IUser} from "./types/types";
@@ -19,6 +20,7 @@ export default function App() {
 
 	// TODO: replace with actual get organisation hook
 	const organisation = {
+		id: 1,
 		company: "Planetaria",
 		description: "The future of the web is in your hands.",
 		email: "octocat@github.com",
@@ -37,7 +39,7 @@ export default function App() {
 	if (!user) return null;
 
 	return (
-		<>
+		<div>
 			<MobileNavbar
 				{...{
 					user,
@@ -46,11 +48,14 @@ export default function App() {
 				}}
 			/>
 			<Navbar user={user} />
-			<TopBar setSidebarOpen={toggleSidebar} />
+			<div className='xl:pl-72'>
+				<TopBar setSidebarOpen={toggleSidebar} />
 
-			<main className='lg:pr-96'></main>
-
+				<main className='lg:pr-96'>
+					<RepositoryList organisationId={organisation.id} />
+				</main>
+			</div>
 			{organisation ? <OrganisationOverview organisation={organisation} /> : null}
-		</>
+		</div>
 	);
 }
