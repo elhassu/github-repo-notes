@@ -36,6 +36,37 @@ export async function getUserDetails() {
 	return {avatar_url, html_url, name} as IUser;
 }
 
+interface getOrganisationReposParams {
+	login: string;
+	page: number | string;
+	per_page?: number | string;
+}
+
+export async function getOrganisationRepos({login, page = 1, per_page = 10}: getOrganisationReposParams) {
+	const query = constructQueryParams({page: page.toString(), per_page: per_page.toString()});
+
+	const response = await axios({
+		method: "GET",
+		url: `${GITHUB_URL}/orgs/${login}/repos${query}`,
+		headers: GITHUB_HEADERS,
+	});
+
+	const reposWithBranches = await Promise.all(response.data.map(async (repo: any) => {
+		const branches = await getBranches({login, repo: repo.name, per_page: 1});
+
+		return {
+			...repo,
+			number_of_branches: branches?.lastPage || 1,
+		};
+	}))
+
+	return {
+		data: reposWithBranches,
+		nextPage: Number(extractLinkFromHeader(response.headers.link, "next")?.page),
+		lastPage: Number(extractLinkFromHeader(response.headers.link, "last")?.page),
+	};
+}
+
 interface Organisation {
 	login: string;
 	id: number;
@@ -69,6 +100,43 @@ interface Organisation {
 	type: "Organization";
 }
 
+// get the organisation by the login
+export async function getOrganisationByLogin(login: string) {
+	const response = await axios({
+		method: "GET",
+		url: `${GITHUB_URL}/orgs/${login}`,
+		headers: GITHUB_HEADERS,
+	});
+
+	return response.data as Organisation;
+}
+
+interface getOrganisationRepoParams {
+	login: string;
+	repo: string;
+	page?: number | string;
+	per_page?: number | string;
+}
+
+export async function getBranches({login, repo, page = 1, per_page = 10}: getOrganisationRepoParams) {
+	const query = constructQueryParams({page: page.toString(), per_page: per_page.toString()});
+
+	const response = await axios({
+		method: "GET",
+		url: `${GITHUB_URL}/repos/${login}/${repo}/branches${query}`,
+		headers: GITHUB_HEADERS,
+	});
+
+	return {
+		data: response.data,
+		nextPage: Number(extractLinkFromHeader(response.headers.link, "next")?.page),
+		lastPage: Number(extractLinkFromHeader(response.headers.link, "last")?.page),
+	};
+}
+
+// ! Below are unused functions due to misunderstanding of brief
+// it was not required to get all the organisations the user is a member of
+
 interface getOrganisationParams {
 	per_page?: number | string;
 	page?: number | string;
@@ -76,7 +144,7 @@ interface getOrganisationParams {
 }
 
 // get the organisations the user is a member of
-export async function getUserOrganisations({per_page = 30, page = 1, includeAllData}: getOrganisationParams) {
+async function getUserOrganisations({per_page = 30, page = 1, includeAllData}: getOrganisationParams) {
 	const query = constructQueryParams({per_page: per_page?.toString(), page: page?.toString()});
 
 	const response = await axios({
@@ -135,7 +203,7 @@ interface getOrganisationDetailsParams {
 }
 
 // get all the organisations the user is a member of
-export async function getAllUserOrganisations({includeAllData}: getOrganisationDetailsParams) {
+async function getAllUserOrganisations({includeAllData}: getOrganisationDetailsParams) {
 	const response = await getUserOrganisations({per_page: 100, page: 1});
 
 	let organisations = response.data;
@@ -150,7 +218,7 @@ export async function getAllUserOrganisations({includeAllData}: getOrganisationD
 
 // iterate through the organisations and return the organisation that matches the name
 // avoid getting full list due to users with a lot of organisations
-export async function findUserOrganisationByName(name: string) {
+async function findUserOrganisationByName(name: string) {
 	const response = await getUserOrganisations({per_page: 100, page: 1});
 
 	const org = response.data.find((org) => [org.login, org.name].includes(name));
@@ -161,41 +229,4 @@ export async function findUserOrganisationByName(name: string) {
 	} else {
 		return org;
 	}
-}
-
-// at 2024-07-11T04:16:29Z I realised that the task may be referring to the "login" and not the "name" property of the organisation
-// I will add a new function to search for the organisation by the login property
-// I also realised that the task may be referring to all organisations and not just the user's organisations
-
-// get the organisation by the login
-export async function getOrganisationByLogin(login: string) {
-	const response = await axios({
-		method: "GET",
-		url: `${GITHUB_URL}/orgs/${login}`,
-		headers: GITHUB_HEADERS,
-	});
-
-	return response.data;
-}
-
-interface getOrganisationReposParams {
-	login: string;
-	page: number | string;
-	per_page?: number | string;
-}
-
-export async function getOrganisationRepos({login, page = 1, per_page = 10}: getOrganisationReposParams) {
-	const query = constructQueryParams({page: page.toString(), per_page: per_page.toString()});
-
-	const response = await axios({
-		method: "GET",
-		url: `${GITHUB_URL}/orgs/${login}/repos${query}`,
-		headers: GITHUB_HEADERS,
-	});
-
-	return {
-		data: response.data,
-		nextPage: extractLinkFromHeader(response.headers.Link, "next"),
-		lastPage: extractLinkFromHeader(response.headers.Link, "last"),
-	};
 }

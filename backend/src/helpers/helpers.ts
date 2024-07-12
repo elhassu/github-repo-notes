@@ -4,13 +4,13 @@
  * @returns cleaned URL
  */
 export function cleanHeaderLinkURL(url: string) {
-	return url.match(/<|>/g)?.[0];
+	return url.match(/<([^>]+)>/g)?.[0];
 }
 
 /**
- * Returns an object with the query parameters from a URL
- * @param {string} url
- * @returns {Record<string, string>}
+ * Extracts query parameters from a URL
+ * @param url
+ * @returns object with query parameters
  */
 export function extractQueryParams(url: string) {
 	const query = url.split("?")[1];
@@ -24,6 +24,11 @@ export function extractQueryParams(url: string) {
 	return allParams;
 }
 
+/**
+ * Constructs query parameters from an object
+ * @param params
+ * @returns query string
+ */
 export function constructQueryParams(params: Record<string, string>) {
 	const query = new URLSearchParams(params);
 	const stringifiedQuery = query.toString();
@@ -31,6 +36,12 @@ export function constructQueryParams(params: Record<string, string>) {
 	return queryString;
 }
 
+/**
+ * Extracts a link from a header
+ * @param header
+ * @param rel
+ * @returns link and page number
+ */
 export function extractLinkFromHeader(header: string, rel: string) {
     if (!header) return null;
 	// split the returned links into an array
