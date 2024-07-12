@@ -1,25 +1,31 @@
 version: "3.9"
 services:
-  frontend:
-    image: frontend
-    networks:
-      - github-repo-notes
-    ports:
-      - "3000:3000"
-  backend:
-    image: backend
-    networks:
-      - github-repo-notes
-    ports:
-      - "3001:3001"
   mongo:
     image: mongo:latest
+    restart: always
     networks:
       - github-repo-notes
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+  backend:
+    image: backend
+    restart: always
+    networks:
+      - github-repo-notes
+    ports:
+      - "3001:3001"
+    depends_on:
+      - mongo
+  frontend:
+    image: frontend
+    networks:
+      - github-repo-notes
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 networks:
   github-repo-notes:
     driver: bridge

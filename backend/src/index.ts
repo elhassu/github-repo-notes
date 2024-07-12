@@ -1,6 +1,22 @@
 import {isAxiosError} from "axios";
 import express, {Application, NextFunction, Request, Response} from "express";
 import {getBranches, getOrganisationByLogin, getOrganisationRepos, getUserDetails} from "./helpers/github-helpers.js";
+import mongoose from "mongoose";
+import CheckedRepos from "./models/checkedRepos.js";
+
+// Connect to MongoDB
+mongoose
+	.connect(process.env.MONGO_URI as string)
+	.then(() => {
+		console.log("Connected to MongoDB");
+		app.listen(process.env.SERVER_PORT, () => {
+			console.log(`Server is running on port ${process.env.SERVER_PORT}!`);
+		});
+	})
+	.catch((err) => {
+		console.error(err);
+		process.exit(1);
+	});
 
 const app: Application = express();
 
@@ -56,7 +72,9 @@ app.get("/api/organisation", async (req: Request, res: Response) => {
 	try {
 		const organisation = await getOrganisationByLogin(login);
 
-		res.status(200).json(organisation);
+		const checkedRepos = await CheckedRepos.find({org: login}).select({name: login, checked: true}).exec();
+
+		res.status(200).json({organisation, checkedRepos});
 	} catch (err) {
 		if (isAxiosError(err) && err.response?.status === 404) {
 			res.status(404).json({message: "We couldn't find this organisation"});
@@ -111,6 +129,33 @@ app.get("/api/organisation/:login/repos/:repo/branches", async (req: Request, re
 	}
 });
 
+app.post("/api/organisation/:login/repos/:repo/check", async (req: Request, res: Response) => {
+	const login = req.params.login;
+	const repo = req.params.repo;
+
+	if (!login || !repo) {
+		res.status(400).json({message: "Organisation Name and Repository Name are required"});
+		return;
+	}
+
+	const checked = req.body.checked;
+
+	if (checked === undefined) {
+		res.status(400).json({message: "checked is required"});
+		return;
+	}
+
+	try {
+		const checkedRepo = new CheckedRepos({org: login, name: repo, checked});
+
+		await checkedRepo.save();
+
+		res.status(200).json(checkedRepo);
+	} catch (err) {
+		throw err;
+	}
+});
+
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 	// This is a generic error handler that will catch any errors that are thrown in the application.
 	if (isAxiosError(err)) {
@@ -121,8 +166,4 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 			message: err?.toString?.() || "We encountered an error processing your request",
 		});
 	}
-});
-
-app.listen(process.env.SERVER_PORT, () => {
-	console.log(`Server is running on port ${process.env.SERVER_PORT}!`);
 });

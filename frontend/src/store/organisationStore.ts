@@ -68,7 +68,7 @@ export default function useOrganisation() {
 			}),
 		})
 			.then((response) => {
-				dispatch(Actions.setOrganisation(response.data as IOrganisation));
+				dispatch(Actions.setOrganisation(response.data?.organisation));
 			})
 
 			.catch((error: AxiosError | Error) => {

@@ -1,0 +1,10 @@
+{
+  "name": "github-repo-notes",
+  "version": "1.0.0",
+  "description": "Time Started: 2024-07-10T19:17:02Z",
+  "main": "index.js",
+  "scripts": {
+    "init": "docker build -t \"backend\" ./backend/ && docker build -t \"frontend\" ./frontend/",
+    "start": "docker-compose up"
+  }
+}
