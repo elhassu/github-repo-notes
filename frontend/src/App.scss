@@ -11,34 +11,34 @@
     }
   }
 
-	a {
-		@apply flex;
-		@apply gap-x-2;
-		@apply items-center;
-		@apply hover:text-gray-600;
-		@apply transition;
-		@apply text-gray-400;
-	}
-
 	* {
 		@apply text-gray-400;
 		@apply flex;
 		@apply items-center;
 		@apply gap-x-2;
 	}
+
+  a {
+		@apply hover:text-gray-600;
+		@apply transition;
+		@apply text-gray-400;
+	}
 }
 
 .stats {
   @apply mt-6;
-  @apply grid;
-  @apply gap-x-2;
+  @apply flex;
+  @apply justify-center;
+  @apply gap-x-4;
   @apply divide-gray-400;
   @apply text-gray-400;
 
   * {
     @apply flex;
     @apply flex-col;
+    @apply mx-auto;
     @apply items-center;
+    @apply justify-center;
     @apply gap-x-2;
 
     svg {

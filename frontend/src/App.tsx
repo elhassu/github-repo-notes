@@ -1,38 +1,20 @@
 import "./App.scss";
+
 import MobileNavbar from "./components/common/MobileNavbar";
 import Navbar from "./components/common/Navbar";
 import TopBar from "./components/common/TopBar";
+
 import RepositoryList from "./components/list/RepositoryList";
 import OrganisationOverview from "./components/organisation/Overview";
-import {useToggleSidebar} from "./hooks/UIHooks";
-import {IOrganisation, IUser} from "./types/types";
+
+import { useToggleSidebar } from "./hooks/UIHooks";
+import useOrganisation from "./store/organisationStore";
+import useUser from "./store/userStore";
 
 export default function App() {
 	const {isOpen, toggleSidebar} = useToggleSidebar();
-
-	// TODO: replace with actual get user hook
-	const user = {
-		avatar_url:
-			"https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-		html_url: "https://github.com/elhassu",
-		name: "Keelan Vella",
-	} satisfies IUser;
-
-	// TODO: replace with actual get organisation hook
-	const organisation = {
-		id: 1,
-		company: "Planetaria",
-		description: "The future of the web is in your hands.",
-		email: "octocat@github.com",
-		collaborators: 3,
-		private_repositories: 3,
-		public_repositories: 3,
-		avatar: "https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=500",
-		html_url: "https://www.github.com/planetaria",
-		location: "San Francisco, CA",
-		followers: 3,
-		following: 3,
-	} satisfies IOrganisation;
+	const {user, loading: userIsLoading} = useUser();
+	const {organisation, loading: organisationIsLoading, getOrganisation} = useOrganisation();
 
 	// temporarily return nothing
 	// TODO return error page if user is null in the future
@@ -49,12 +31,17 @@ export default function App() {
 			/>
 			<Navbar user={user} />
 			<div className='xl:pl-72'>
-				<TopBar setSidebarOpen={toggleSidebar} />
+				<TopBar {...{
+					setSidebarOpen: toggleSidebar,
+					getOrganisation,
+					organisationIsLoading,
+				}} />
 
 				<main className='lg:pr-96'>
-					<RepositoryList organisationId={organisation.id} />
+					<RepositoryList organisation={organisation?.login} />
 				</main>
 			</div>
+
 			{organisation ? <OrganisationOverview organisation={organisation} /> : null}
 		</div>
 	);

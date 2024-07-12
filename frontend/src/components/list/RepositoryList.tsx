@@ -1,29 +1,24 @@
+import { useOnScreen } from "../../hooks/UIHooks";
+import { useRepositories } from "../../store/repositoryStore";
 import { IRepository } from "../../types/types";
 import RepositoryListRow from "./RepositoryListRow";
 
 interface RepositoryListProps {
-	organisationId: number;
+	organisation: string | null;
 }
 
-export default function RepositoryList({ organisationId }: RepositoryListProps) {
-	const repositories = [
-		{
-			id: 1296269,
-			name: "Hello-World",
-			full_name: "octocat/Hello-World",
-			html_url: "https://github.com/octocat/Hello-World",
-			number_of_branches: 2,
-			language: "HTML"
-		},
-	] as IRepository[];
-	const selectedRepositories = [] as number[];
+export default function RepositoryList({organisation}: RepositoryListProps) {
+	const selectedRepositories = [] as string[];
+
+	const [lastRowRef, isLastRowVisible] = useOnScreen();
+	const {repositories} = useRepositories(organisation, isLastRowVisible);
 
 	return (
 		<div className='px-4 pt-4 sm:px-6 lg:px-8'>
 			<div className='sm:flex sm:items-center'>
 				<div className='sm:flex-auto'>
 					<h1 className='text-base font-semibold leading-6 text-gray-900'>Repositories</h1>
-					<p className='mt-2 text-sm text-gray-700'>A list of all the repositories in your organisation.</p>
+					<p className='mt-2 text-sm text-gray-700'>A list of all the repositories in this organisation.</p>
 				</div>
 			</div>
 			<div className='mt-8 flow-root'>
@@ -64,8 +59,19 @@ export default function RepositoryList({ organisationId }: RepositoryListProps) 
 									</tr>
 								</thead>
 								<tbody className='divide-y divide-gray-200 bg-white'>
-									{repositories.map((repository) => {
-										const selected = selectedRepositories?.includes(repository.id);
+									{repositories.map((repository, index) => {
+										const selected = selectedRepositories?.includes(repository?.name);
+
+										if (index + 1 === repositories.length) {
+											return (
+												<RepositoryListRow
+													key={repository.id}
+													repository={repository}
+													selected={selected}
+													ref={lastRowRef}
+												/>
+											);
+										}
 										return (
 											<RepositoryListRow
 												key={repository.id}

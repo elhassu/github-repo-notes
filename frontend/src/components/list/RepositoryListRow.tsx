@@ -1,13 +1,17 @@
-import {IRepository} from "../../types/types";
+import { forwardRef } from "react";
+import { IRepository } from "../../types/types";
 
 interface RepositoryListRowProps {
 	repository: IRepository;
 	selected: boolean;
 }
 
-export default function RepositoryListRow({repository, selected}: RepositoryListRowProps) {
+const RepositoryListRow = forwardRef<HTMLTableRowElement | null, RepositoryListRowProps>((props, ref) => {
+	const { repository, selected } = props;
+
 	return (
 		<tr
+			ref={ref}
 			key={repository.id}
 			className={selected ? "bg-gray-50" : undefined}>
 			<td className='relative px-7 sm:w-12 sm:px-6'>
@@ -33,4 +37,6 @@ export default function RepositoryListRow({repository, selected}: RepositoryList
 			<td className='whitespace-nowrap px-3 py-4 text-sm text-gray-500'>{repository.language}</td>
 		</tr>
 	);
-}
+})
+
+export default RepositoryListRow;

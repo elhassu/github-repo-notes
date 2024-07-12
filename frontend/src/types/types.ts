@@ -5,19 +5,19 @@ export type IUser = {
 }
 
 export type IOrganisation = {
-    id: number;
-    company: string;
-    description: string | undefined | null;
-    email: string | undefined | null;
-    collaborators: number;
-    private_repositories: number;
-    public_repositories: number;
-    avatar: string | undefined | null;
-    html_url: string;
-    location: string | undefined | null;
-    followers: number;
-    following: number;
-}
+	id: number;
+	name: string;
+	description: string | undefined | null;
+	email: string | undefined | null;
+	collaborators: number;
+	total_private_repos: number;
+	public_repos: number;
+	avatar_url: string | undefined | null;
+	html_url: string;
+	location: string | undefined | null;
+	followers: number;
+	following: number;
+};
 
 export type IRepository = {
     id: number;

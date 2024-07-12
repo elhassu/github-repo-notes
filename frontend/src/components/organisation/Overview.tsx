@@ -1,6 +1,6 @@
-import { EnvelopeIcon, LinkIcon, MapPinIcon, UserIcon, UserPlusIcon, UsersIcon } from "@heroicons/react/20/solid";
+import {EnvelopeIcon, LinkIcon, MapPinIcon, UserIcon, UserPlusIcon, UsersIcon} from "@heroicons/react/20/solid";
 
-import { IOrganisation } from "../../types/types";
+import {IOrganisation} from "../../types/types";
 
 export type OrganisationOverviewProps = {
 	organisation: IOrganisation;
@@ -8,13 +8,13 @@ export type OrganisationOverviewProps = {
 
 export default function OrganisationOverview({organisation}: OrganisationOverviewProps) {
 	const {
-		company,
+		name,
 		description,
 		email,
 		collaborators,
-		private_repositories,
-		public_repositories,
-		avatar,
+		total_private_repos,
+		public_repos,
+		avatar_url,
 		html_url,
 		location,
 		followers,
@@ -28,15 +28,15 @@ export default function OrganisationOverview({organisation}: OrganisationOvervie
 			</header>
 			<div className='px-4 py-6 sm:px-6 lg:px-8'>
 				<div className='flex items-center gap-x-4'>
-					{avatar ? (
+					{avatar_url ? (
 						<img
-							src={avatar}
-							alt={`${company} avatar`}
+							src={avatar_url}
+							alt={`${name} avatar`}
 							className='w-16 h-16 rounded-lg bg-white p-1'
 						/>
 					) : null}
 					<div>
-						<h1 className='text-2xl font-semibold leading-7 text-gray-900'>{company}</h1>
+						<h1 className='text-2xl font-semibold leading-7 text-gray-900'>{name}</h1>
 						<p className='text-sm leading-5 text-gray-400'>{description}</p>
 					</div>
 				</div>
@@ -60,27 +60,31 @@ export default function OrganisationOverview({organisation}: OrganisationOvervie
 						</div>
 					) : null}
 				</div>
-				<div className='stats divide-x-2 grid-cols-3'>
-					<div>
-						<UserPlusIcon />
-						<p className='text-sm leading-5 text-gray-400'>{collaborators} collaborators</p>
-					</div>
+				<div className='stats'>
+					{!collaborators ? null : (
+						<div>
+							<UserPlusIcon />
+							<p className='text-sm leading-5 text-gray-400'>{collaborators} collaborators</p>
+						</div>
+					)}
 					<div>
 						<UsersIcon />
-						<p className='text-sm leading-5 text-gray-400'>{followers} followers</p>
+						<span className='text-sm leading-5 text-gray-400'>{followers} followers</span>
 					</div>
-					<div className='flex flex-col items-center gap-x-2 pl-2'>
+					<div>
 						<UserIcon />
-						<p className='text-sm leading-5 text-gray-400'>{following} following</p>
+						<span className='text-sm leading-5 text-gray-400'>{following} following</span>
 					</div>
 				</div>
 				<h2 className='text-base font-semibold leading-7 text-gray-700 mt-6 text-center'>Repositories</h2>
-				<div className='stats divide-x-2 grid-cols-2'>
-					<div>
-						<p className='text-sm leading-5 text-gray-400'>{private_repositories} private</p>
-					</div>
+				<div className='stats'>
+					{typeof total_private_repos === "undefined" ? null : (
+						<div>
+							<span className='text-sm leading-5 text-gray-400'>{total_private_repos} private</span>
+						</div>
+					)}
 					<div className='flex flex-col items-center gap-x-2 pl-2'>
-						<p className='text-sm leading-5 text-gray-400'>{public_repositories} public</p>
+						<span className='text-sm leading-5 text-gray-400'>{public_repos} public</span>
 					</div>
 				</div>
 			</div>
