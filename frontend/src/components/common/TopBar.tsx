@@ -18,7 +18,7 @@ export default function TopBar({setSidebarOpen, getOrganisation, organisationIsL
 	return (
 		<>
 			{/* Sticky search header */}
-			<div className='sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-6 border-b border-white/5 px-4 shadow-sm sm:px-6 lg:px-8'>
+			<div className='sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-6 border-b bg-white border-white/5 px-4 shadow-sm sm:px-6 lg:px-8'>
 				<SidebarToggleButton setSidebarOpen={setSidebarOpen} />
 				<div className='flex flex-1 gap-x-4 self-stretch lg:gap-x-6'>
 					<form

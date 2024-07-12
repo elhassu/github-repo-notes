@@ -4,6 +4,7 @@ import { IRepository } from "../../types/types";
 interface RepositoryListRowProps {
 	repository: IRepository;
 	selected: boolean;
+	index?: number;
 }
 
 const RepositoryListRow = forwardRef<HTMLTableRowElement | null, RepositoryListRowProps>((props, ref) => {

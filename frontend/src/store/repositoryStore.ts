@@ -1,13 +1,13 @@
-import toast from "react-hot-toast";
-import {IRepository} from "../types/types";
-import {MutableRefObject, useCallback, useDebugValue, useEffect, useReducer} from "react";
-import {apiRequest} from "../helpers/requestHelpers";
 import axios, {AxiosError, Canceler, CancelTokenStatic, isAxiosError, isCancel} from "axios";
+import {useDebugValue, useEffect, useReducer} from "react";
+import toast from "react-hot-toast";
+import {apiRequest} from "../helpers/requestHelpers";
+import {IRepository} from "../types/types";
 
 const INITIAL_STATE = {
 	list: [] as IRepository[],
 	nextPage: 1,
-	lastPage: null,
+	lastPage: 2,
 	organisation: null,
 	selected: [] as IRepository[],
 	loading: false,
@@ -31,11 +31,8 @@ interface IAction {
 }
 
 export const Actions = {
-	setOrganisation: (payload: string) => ({type: Types.SET_ORGANISATION, payload}),
-	setRepositories: (payload: {list: IRepository[]; nextPage: number; lastPage: number}) => ({
-		type: Types.SET_REPOSITORIES,
-		payload,
-	}),
+	setOrganisation: (payload: string | null) => ({type: Types.SET_ORGANISATION, payload}),
+	setRepositories: (payload: {data: IRepository[]}) => ({type: Types.SET_REPOSITORIES, payload}),
 	setPageNumber: (payload: number) => ({type: Types.SET_PAGE_NUMBER, payload}),
 	setLastPage: (payload: number) => ({type: Types.SET_LAST_PAGE, payload}),
 	addRepositories: (payload: IRepository[]) => ({type: Types.ADD_REPOSITORIES, payload}),
@@ -56,6 +53,14 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 			return {
 				...state,
 				list: action.payload?.data,
+			};
+		case Types.ADD_REPOSITORIES:
+			const newList = [...state.list, ...action.payload?.data];
+			const uniqueList = Array.from(new Set(newList.map((a) => a.id))).map((id) => newList.find((a) => a.id === id));
+
+			return {
+				...state,
+				list: uniqueList,
 			};
 		case Types.SET_PAGE_NUMBER:
 			return {
@@ -92,38 +97,52 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 	}
 }
 
-export function useRepositories(organisation: string | null, lastRowVisible: boolean): { repositories: IRepository[]; loading: boolean } {
+export function useRepositories(
+	organisation: string | null,
+	lastRowVisible: boolean,
+): {repositories: IRepository[]; loading: boolean} {
 	const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
-
-	const isLastPage = state.nextPage === state.lastPage;
 
 	useDebugValue(
 		state.loading ? "Loading" : state.list.length ? `${state.list.length} repositories` : "No repositories",
 	);
-    let cancel: null | Canceler = null;
+	let cancel: null | Canceler = null;
 
 	useEffect(() => {
-		if (state.loading || isLastPage || !organisation) return;
 		const newOrganisation = organisation !== state.organisation;
+		const isLastPage = state.nextPage > state.lastPage;
+		const canQuery = (newOrganisation || !isLastPage) && !state.loading && organisation;
 
-		if (newOrganisation) Actions.setOrganisation(organisation);
+		if (newOrganisation) {
+			dispatch(Actions.setOrganisation(organisation));
+		}
+
+		if (!canQuery) return;
 
 		dispatch(Actions.setLoading(true));
 		apiRequest({
 			method: "GET",
 			path: `/organisation/${organisation}/repos`,
-			query: {page: state.nextPage},
+			query: {page: newOrganisation ? 1 : state.nextPage},
 			cancelToken: new axios.CancelToken((c) => {
 				cancel = c;
 			}),
 		})
-			.then((response) => {
+			.then(({data}) => {
+                // If the organisation is new, set the repositories, otherwise add the repositories
 				if (newOrganisation) {
-					dispatch(Actions.setRepositories(response.data));
+					dispatch(Actions.setRepositories(data));
 				} else {
-					dispatch(Actions.addRepositories(response.data));
+					dispatch(Actions.addRepositories(data));
 				}
-				dispatch(Actions.setLastPage(response.data.lastPage));
+
+                // If the next page is not returned, assume there is no next page and increment the page number
+				if (data?.nextPage) {
+                    dispatch(Actions.setPageNumber(data.nextPage));
+                } else {
+                    dispatch(Actions.setPageNumber(state.lastPage + 1));
+                }
+				if (data?.lastPage) dispatch(Actions.setLastPage(data.lastPage));
 			})
 			.catch((error: AxiosError | Error | CancelTokenStatic) => {
 				if (isCancel(error)) return;
@@ -139,7 +158,7 @@ export function useRepositories(organisation: string | null, lastRowVisible: boo
 				dispatch(Actions.setLoading(false));
 			});
 
-            return () => cancel?.()
+		return () => cancel?.();
 	}, [lastRowVisible, organisation]);
 
 	return {repositories: state.list, loading: state.loading};

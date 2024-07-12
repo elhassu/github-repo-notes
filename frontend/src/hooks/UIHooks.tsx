@@ -1,4 +1,4 @@
-import { MutableRefObject, useDebugValue, useEffect, useRef, useState } from "react";
+import { RefCallback, useCallback, useDebugValue, useState } from "react";
 
 export function useToggleSidebar() {
     const [isOpen, setIsOpen] = useState(false);
@@ -9,8 +9,8 @@ export function useToggleSidebar() {
     return {isOpen, toggleSidebar};
 }
 
-export function useOnScreen (): [MutableRefObject<HTMLTableRowElement | null>, boolean] {
-	const containerRef = useRef<HTMLTableRowElement | null>(null);
+export function useOnScreen(): [RefCallback<HTMLTableRowElement>, boolean] {
+	// const containerRef = useRef<HTMLTableRowElement | null>(null);
 	const [isVisible, setIsVisible] = useState(false);
 
 	const callbackFunction = (entries: IntersectionObserverEntry[]) => {
@@ -18,15 +18,17 @@ export function useOnScreen (): [MutableRefObject<HTMLTableRowElement | null>, b
 		setIsVisible(entry.isIntersecting);
 	};
 
-	useEffect(() => {
+	const containerRef = useCallback((node: HTMLTableRowElement) => {
 		const observer = new IntersectionObserver(callbackFunction);
 
-		if (containerRef.current) observer.observe(containerRef?.current);
+		if (node) observer.observe(node);
 
 		return () => {
-			if (containerRef.current) observer.unobserve(containerRef?.current);
+			if (node) observer.unobserve(node);
 		};
-	}, [containerRef]);
+	}, []);
+
+	useDebugValue(isVisible ? "Element is visible" : "Element is not visible");
 
 	return [containerRef, isVisible];
 };

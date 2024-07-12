@@ -1,6 +1,6 @@
-import { useOnScreen } from "../../hooks/UIHooks";
-import { useRepositories } from "../../store/repositoryStore";
-import { IRepository } from "../../types/types";
+import {useOnScreen} from "../../hooks/UIHooks";
+import {useRepositories} from "../../store/repositoryStore";
+import {IRepository} from "../../types/types";
 import RepositoryListRow from "./RepositoryListRow";
 
 interface RepositoryListProps {
@@ -75,6 +75,7 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 										return (
 											<RepositoryListRow
 												key={repository.id}
+												index={index}
 												repository={repository}
 												selected={selected}
 											/>
