@@ -4,6 +4,10 @@ import {getBranches, getOrganisationByLogin, getOrganisationRepos, getUserDetail
 import mongoose from "mongoose";
 import CheckedRepos from "./models/checkedRepos.js";
 
+if (!process.env.GITHUB_API_TOKEN) {
+	throw new Error("GITHUB_API_TOKEN is not set");
+}
+
 // Connect to MongoDB
 mongoose
 	.connect(process.env.MONGO_URI as string)
