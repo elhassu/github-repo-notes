@@ -72,9 +72,16 @@ app.get("/api/organisation", async (req: Request, res: Response) => {
 	try {
 		const organisation = await getOrganisationByLogin(login);
 
-		const checkedRepos = await CheckedRepos.find({org: login}).select({name: login, checked: true}).exec();
+		const checkedRepos = await CheckedRepos.find({org: login}).exec();
 
-		res.status(200).json({organisation, checkedRepos});
+		const formattedCheckedRepos = checkedRepos
+			.filter(({checked}) => checked)
+			.map((repo) => {
+				console.log(repo);
+				return repo.name;
+			});
+
+		res.status(200).json({organisation, checkedRepos: formattedCheckedRepos});
 	} catch (err) {
 		if (isAxiosError(err) && err.response?.status === 404) {
 			res.status(404).json({message: "We couldn't find this organisation"});
@@ -109,8 +116,8 @@ app.get("/api/organisation/:login/repos", async (req: Request, res: Response) =>
 });
 
 app.get("/api/organisation/:login/repos/:repo/branches", async (req: Request, res: Response) => {
-	const login = req.params.login;
-	const repo = req.params.repo;
+	const login = req.params.login as string;
+	const repo = req.params.repo as string;
 
 	if (!login || !repo) {
 		res.status(400).json({message: "Organisation Name and Repository Name are required"});
@@ -130,8 +137,8 @@ app.get("/api/organisation/:login/repos/:repo/branches", async (req: Request, re
 });
 
 app.post("/api/organisation/:login/repos/:repo/check", async (req: Request, res: Response) => {
-	const login = req.params.login;
-	const repo = req.params.repo;
+	const login = req.params.login as string;
+	const repo = req.params.repo as string;
 
 	if (!login || !repo) {
 		res.status(400).json({message: "Organisation Name and Repository Name are required"});
@@ -141,14 +148,14 @@ app.post("/api/organisation/:login/repos/:repo/check", async (req: Request, res:
 	const checked = req.body.checked;
 
 	if (checked === undefined) {
-		res.status(400).json({message: "checked is required"});
+		res.status(400).json({message: "Checked is required"});
 		return;
 	}
 
 	try {
-		const checkedRepo = new CheckedRepos({org: login, name: repo, checked});
+		const filter = {org: login, name: repo};
 
-		await checkedRepo.save();
+		const checkedRepo = await CheckedRepos.updateOne(filter, {$set: {checked}}, {upsert: true}).exec();
 
 		res.status(200).json(checkedRepo);
 	} catch (err) {

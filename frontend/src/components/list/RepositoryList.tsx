@@ -1,17 +1,21 @@
 import {useOnScreen} from "../../hooks/UIHooks";
 import {useRepositories} from "../../store/repositoryStore";
-import {IRepository} from "../../types/types";
 import RepositoryListRow from "./RepositoryListRow";
 
 interface RepositoryListProps {
 	organisation: string | null;
+	checkedRepos: string[];
 }
 
-export default function RepositoryList({organisation}: RepositoryListProps) {
-	const selectedRepositories = [] as string[];
-
+export default function RepositoryList({organisation, checkedRepos}: RepositoryListProps) {
 	const [lastRowRef, isLastRowVisible] = useOnScreen();
-	const {repositories, loadBranches, loading} = useRepositories(organisation, isLastRowVisible);
+	const {
+		repositories,
+		loadBranches,
+		loading,
+		toggleRepoSelection,
+		selected: selectedRepositories,
+	} = useRepositories(organisation, isLastRowVisible, checkedRepos);
 
 	return (
 		<div className='px-4 pt-4 sm:px-6 lg:px-8'>
@@ -66,8 +70,9 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 											return (
 												<RepositoryListRow
 													key={repository.id}
-													repository={repository}
 													selected={selected}
+													repository={repository}
+													toggleRepoSelection={toggleRepoSelection}
 													loadBranches={loadBranches}
 													ref={lastRowRef}
 												/>
@@ -78,11 +83,21 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 												key={repository.id}
 												index={index}
 												repository={repository}
+												toggleRepoSelection={toggleRepoSelection}
 												loadBranches={loadBranches}
 												selected={selected}
 											/>
 										);
 									})}
+									{loading && (
+										<tr>
+											<td
+												colSpan={6}
+												className='px-6 py-4 whitespace-nowrap text-sm text-gray-500'>
+												Loading...
+											</td>
+										</tr>
+									)}
 								</tbody>
 							</table>
 						</div>

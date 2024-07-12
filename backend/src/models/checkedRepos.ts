@@ -21,5 +21,7 @@ const checkedReposSchema = new Schema(
 	},
 );
 
+checkedReposSchema.index({org: 1, name: 1}, {unique: true});
+
 const CheckedRepos = mongoose.model("CheckedRepos", checkedReposSchema);
 export default CheckedRepos;

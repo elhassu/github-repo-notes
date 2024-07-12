@@ -1,16 +1,15 @@
 import { ServerIcon } from "@heroicons/react/24/solid";
-interface Navigation {
+interface INavigation {
 	name: string;
 	href: string;
 	icon: React.ComponentType<React.ComponentProps<"svg">>;
 	current: boolean;
 }
-const navigation: Navigation[] = [{name: "Repositories", href: "#", icon: ServerIcon, current: true}];
+const navigation: INavigation[] = [{name: "Repositories", href: "#", icon: ServerIcon, current: true}];
 
 export default function Navigation() {
     return (
 			<ul
-				role='list'
 				className='-mx-2 space-y-1'>
 				{navigation.map((item) => (
 					<li key={item.name}>

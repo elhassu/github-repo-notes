@@ -5,12 +5,13 @@ import {ChevronDownIcon} from "@heroicons/react/24/solid";
 interface RepositoryListRowProps {
 	repository: IRepository;
 	loadBranches?: (repository: string) => void;
+	toggleRepoSelection?: (name: string) => void;
 	selected: boolean;
 	index?: number;
 }
 
 const RepositoryListRow = forwardRef<HTMLTableRowElement | null, RepositoryListRowProps>((props, ref) => {
-	const {repository, selected, loadBranches} = props;
+	const {repository, selected, loadBranches, toggleRepoSelection} = props;
 	const [expand, setExpand] = useState(false);
 
 	return (
@@ -26,7 +27,9 @@ const RepositoryListRow = forwardRef<HTMLTableRowElement | null, RepositoryListR
 						className='absolute left-4 top-1/2 -mt-2 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600'
 						value={repository.id}
 						checked={selected}
-						onChange={(e) => {}}
+						onChange={(e) => {
+							toggleRepoSelection?.(repository.name);
+						}}
 					/>
 				</td>
 				<td className='whitespace-nowrap py-4 pr-3 text-sm font-medium'>{repository.name}</td>

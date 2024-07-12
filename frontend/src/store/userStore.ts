@@ -1,7 +1,7 @@
-import { useDebugValue, useEffect, useReducer } from "react";
+import {useDebugValue, useEffect, useReducer} from "react";
 import toast from "react-hot-toast";
-import { apiRequest } from "../helpers/requestHelpers";
-import { IUser } from "../types/types";
+import {apiRequest} from "../helpers/requestHelpers";
+import {IUser} from "../types/types";
 
 const INITIAL_STATE = {
 	user: null,
@@ -62,6 +62,7 @@ export default function useUser() {
 			.finally(() => {
 				dispatch(Actions.setLoading(false));
 			});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return {user: state.user, loading: state.loading};

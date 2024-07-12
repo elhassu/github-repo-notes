@@ -1,29 +1,27 @@
-import axios, {
+import {
 	AxiosError,
-	CanceledError,
-	Canceler,
-	CancelToken,
-	CancelTokenStatic,
-	isAxiosError,
-	isCancel,
+	isAxiosError
 } from "axios";
-import {useDebugValue, useReducer} from "react";
+import { useDebugValue, useReducer } from "react";
 import toast from "react-hot-toast";
-import {apiRequest} from "../helpers/requestHelpers";
-import {IOrganisation} from "../types/types";
+import { apiRequest } from "../helpers/requestHelpers";
+import { IOrganisation } from "../types/types";
 
 const INITIAL_STATE = {
 	organisation: null,
 	loading: false,
+	checkedRepos: [] as string[],
 };
 
 export const Types = {
 	SET_ORGANISATION: "SET_ORGANISATION",
 	SET_LOADING: "SET_LOADING",
+	SET_CHECKED_REPOSITORIES: "SET_CHECKED_REPOSITORIES",
 };
 
 export const Actions = {
 	setOrganisation: (payload: IOrganisation) => ({type: Types.SET_ORGANISATION, payload}),
+	setCheckedRepositories: (payload: string[]) => ({type: Types.SET_CHECKED_REPOSITORIES, payload}),
 	setLoading: (payload: boolean) => ({type: Types.SET_LOADING, payload}),
 };
 
@@ -38,6 +36,11 @@ export function reducer(state = INITIAL_STATE, action: IAction) {
 			return {
 				...state,
 				organisation: action.payload,
+			};
+		case Types.SET_CHECKED_REPOSITORIES:
+			return {
+				...state,
+				checkedRepos: action.payload,
 			};
 		case Types.SET_LOADING:
 			return {
@@ -56,19 +59,16 @@ export default function useOrganisation() {
 
 	function getOrganisation(name: string): void {
 		if (state.loading || !name || (name === state.organisation?.login)) return;
-		let cancel: null | Canceler = null;
 
 		dispatch(Actions.setLoading(true));
 		apiRequest({
 			method: "GET",
 			path: "/organisation",
-			query: {name},
-			cancelToken: new axios.CancelToken((c) => {
-				cancel = c;
-			}),
+			query: {name}
 		})
 			.then((response) => {
 				dispatch(Actions.setOrganisation(response.data?.organisation));
+				dispatch(Actions.setCheckedRepositories(response.data?.checkedRepos));
 			})
 
 			.catch((error: AxiosError | Error) => {
@@ -85,5 +85,5 @@ export default function useOrganisation() {
 			});
 	}
 
-	return {organisation: state.organisation, loading: state.loading, getOrganisation};
+	return {organisation: state.organisation, checkedRepos: state.checkedRepos,  loading: state.loading, getOrganisation};
 }

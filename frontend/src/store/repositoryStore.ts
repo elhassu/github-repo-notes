@@ -9,7 +9,7 @@ const INITIAL_STATE = {
 	nextPage: 1,
 	lastPage: 2,
 	organisation: null,
-	selected: [] as IRepository[],
+	selected: [] as string[],
 	loading: false,
 	loadingBranches: [] as string[],
 };
@@ -39,13 +39,13 @@ export const Actions = {
 	setRepositories: (payload: {data: IRepository[]}) => ({type: Types.SET_REPOSITORIES, payload}),
 	addLoadingBranch: (payload: string) => ({type: Types.ADD_LOADING_BRANCH, payload}),
 	removeLoadingBranch: (payload: string) => ({type: Types.REMOVE_LOADING_BRANCH, payload}),
-    setRepositoryBranches: (payload: {repo: string; branches: any}) => ({type: Types.SET_REPOSITORY_BRANCHES, payload}),
+	setRepositoryBranches: (payload: {repo: string; branches: any}) => ({type: Types.SET_REPOSITORY_BRANCHES, payload}),
 	setPageNumber: (payload: number) => ({type: Types.SET_PAGE_NUMBER, payload}),
 	setLastPage: (payload: number) => ({type: Types.SET_LAST_PAGE, payload}),
 	addRepositories: (payload: IRepository[]) => ({type: Types.ADD_REPOSITORIES, payload}),
 	setSelectedRepositories: (payload: string[]) => ({type: Types.SET_SELECTED_REPOSITORIES, payload}),
 	addSelectedRepositories: (payload: string) => ({type: Types.ADD_SELECTED_REPOSITORIES, payload}),
-	removeSelectedRepositories: (payload: number) => ({type: Types.REMOVE_SELECTED_REPOSITORIES, payload}),
+	removeSelectedRepositories: (payload: string) => ({type: Types.REMOVE_SELECTED_REPOSITORIES, payload}),
 	setLoading: (payload: boolean) => ({type: Types.SET_LOADING, payload}),
 };
 
@@ -83,8 +83,8 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 			return {
 				...state,
 				list: state.list.map((item) => {
-                    if (item.name === action.payload.repo) {
-                    return {
+					if (item.name === action.payload.repo) {
+						return {
 							...item,
 							branches: action.payload.branches,
 						};
@@ -115,7 +115,7 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 		case Types.REMOVE_SELECTED_REPOSITORIES:
 			return {
 				...state,
-				selected: state.selected.filter((item) => item.id !== action.payload),
+				selected: state.selected.filter((item) => item !== action.payload),
 			};
 		case Types.SET_LOADING:
 			return {
@@ -130,15 +130,29 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 export function useRepositories(
 	organisation: string | null,
 	lastRowVisible: boolean,
-): {repositories: IRepository[]; loading: boolean; loadBranches: (name: string) => void} {
+	checkedRepos: string[],
+): {
+	repositories: IRepository[];
+	loading: boolean;
+	loadBranches: (name: string) => void;
+	selected: string[];
+	toggleRepoSelection: (name: string) => void;
+} {
 	const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
 	useDebugValue(
 		state.loading ? "Loading" : state.list.length ? `${state.list.length} repositories` : "No repositories",
 	);
-	let cancel: null | Canceler = null;
+
+	const stringifiedCheckedRepos = JSON.stringify(checkedRepos);
 
 	useEffect(() => {
+		dispatch(Actions.setSelectedRepositories(checkedRepos));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [stringifiedCheckedRepos]);
+
+	useEffect(() => {
+		let cancel: null | Canceler = null;
 		const newOrganisation = organisation !== state.organisation;
 		const isLastPage = state.nextPage > state.lastPage;
 		const canQuery = (newOrganisation || !isLastPage) && !state.loading && organisation;
@@ -188,8 +202,9 @@ export function useRepositories(
 				dispatch(Actions.setLoading(false));
 			});
 
-		return () => cancel?.();
-	}, [lastRowVisible, organisation]);
+			return () => cancel?.();
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		}, [lastRowVisible, organisation]);
 
 	const loadBranches = async (name: string) => {
 		dispatch(Actions.addLoadingBranch(name));
@@ -199,20 +214,51 @@ export function useRepositories(
 			path: `/organisation/${organisation}/repos/${name}/branches`,
 		})
 			.then((response) => {
-                dispatch(Actions.setRepositoryBranches({repo: name, branches: response.data?.data}));
+				dispatch(Actions.setRepositoryBranches({repo: name, branches: response.data?.data}));
 			})
 			.catch((error) => {
-                if (isAxiosError(error)) {
-                    console.warn(error.response?.status, error.response?.data);
-                    if (error.response?.data?.message) toast.error(error.response?.data?.message);
-                } else {
-                    console.warn(error);
-                    toast.error("We encountered an error getting these branches");
-                }
-			}).finally(() => {
-                dispatch(Actions.removeLoadingBranch(name));
-            });
+				if (isAxiosError(error)) {
+					console.warn(error.response?.status, error.response?.data);
+					if (error.response?.data?.message) toast.error(error.response?.data?.message);
+				} else {
+					console.warn(error);
+					toast.error("We encountered an error getting these branches");
+				}
+			})
+			.finally(() => {
+				dispatch(Actions.removeLoadingBranch(name));
+			});
 	};
 
-	return {repositories: state.list, loading: state.loading, loadBranches};
+	const toggleRepoSelection = (name: string) => {
+		const isSelected = state.selected.includes(name);
+
+		apiRequest({
+			method: "POST",
+			path: `/organisation/${organisation}/repos/${name}/check`,
+			body: {checked: !isSelected},
+		})
+			.then(() => {
+				if (isSelected) {
+					dispatch(Actions.removeSelectedRepositories(name));
+				} else {
+					dispatch(Actions.addSelectedRepositories(name));
+				}
+			})
+			.catch((error) => {
+				if (isAxiosError(error)) {
+					console.warn(error.response?.status, error.response?.data);
+					if (error.response?.data?.message) toast.error(error.response?.data?.message);
+					else toast.error("We encountered an error checking this repository");
+				}
+			});
+	};
+
+	return {
+		repositories: state.list,
+		loading: state.loading,
+		loadBranches,
+		selected: state.selected,
+		toggleRepoSelection,
+	};
 }

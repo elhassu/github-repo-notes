@@ -9,7 +9,7 @@ import cleanDeep from "clean-deep";
 export function constructQueryParams (object: object | undefined) {
 	const objectToUse = cleanDeep({...object});
 
-	if (Object.keys(objectToUse).length == 0) return "";
+	if (Object.keys(objectToUse).length === 0) return "";
 
 	return `?${new URLSearchParams(objectToUse).toString()}`;
 };

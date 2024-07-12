@@ -14,11 +14,11 @@ import useUser from "./store/userStore";
 export default function App() {
 	const {isOpen, toggleSidebar} = useToggleSidebar();
 	const {user, loading: userIsLoading} = useUser();
-	const {organisation, loading: organisationIsLoading, getOrganisation} = useOrganisation();
+	const {organisation, checkedRepos, loading: organisationIsLoading, getOrganisation} = useOrganisation();
 
 	// temporarily return nothing
 	// TODO return error page if user is null in the future
-	if (!user) return null;
+	if (userIsLoading) return null;
 
 	return (
 		<div>
@@ -38,7 +38,7 @@ export default function App() {
 				}} />
 
 				<main className='lg:pr-96'>
-					<RepositoryList organisation={organisation?.login} />
+					<RepositoryList checkedRepos={checkedRepos} organisation={organisation?.login} />
 				</main>
 			</div>
 
