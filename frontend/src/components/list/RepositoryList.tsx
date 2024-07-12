@@ -11,7 +11,7 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 	const selectedRepositories = [] as string[];
 
 	const [lastRowRef, isLastRowVisible] = useOnScreen();
-	const {repositories} = useRepositories(organisation, isLastRowVisible);
+	const {repositories, loadBranches, loading} = useRepositories(organisation, isLastRowVisible);
 
 	return (
 		<div className='px-4 pt-4 sm:px-6 lg:px-8'>
@@ -44,7 +44,7 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 										<th
 											scope='col'
 											className='px-3 py-3.5 text-left text-sm font-semibold text-gray-900'>
-											Number of Branches
+											Branches
 										</th>
 										<th
 											scope='col'
@@ -68,6 +68,7 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 													key={repository.id}
 													repository={repository}
 													selected={selected}
+													loadBranches={loadBranches}
 													ref={lastRowRef}
 												/>
 											);
@@ -77,6 +78,7 @@ export default function RepositoryList({organisation}: RepositoryListProps) {
 												key={repository.id}
 												index={index}
 												repository={repository}
+												loadBranches={loadBranches}
 												selected={selected}
 											/>
 										);

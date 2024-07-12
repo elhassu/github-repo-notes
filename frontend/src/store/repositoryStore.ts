@@ -11,11 +11,15 @@ const INITIAL_STATE = {
 	organisation: null,
 	selected: [] as IRepository[],
 	loading: false,
+	loadingBranches: [] as string[],
 };
 
 export const Types = {
 	SET_REPOSITORIES: "SET_REPOSITORIES",
 	SET_PAGE_NUMBER: "SET_PAGE_NUMBER",
+	ADD_LOADING_BRANCH: "LOADING_BRANCH",
+	REMOVE_LOADING_BRANCH: "REMOVE_LOADING_BRANCH",
+	SET_REPOSITORY_BRANCHES: "SET_REPOSITORY_BRANCHES",
 	SET_LAST_PAGE: "SET_LAST_PAGE",
 	ADD_REPOSITORIES: "ADD_REPOSITORIES",
 	SET_SELECTED_REPOSITORIES: "SET_SELECTED_REPOSITORIES",
@@ -33,6 +37,9 @@ interface IAction {
 export const Actions = {
 	setOrganisation: (payload: string | null) => ({type: Types.SET_ORGANISATION, payload}),
 	setRepositories: (payload: {data: IRepository[]}) => ({type: Types.SET_REPOSITORIES, payload}),
+	addLoadingBranch: (payload: string) => ({type: Types.ADD_LOADING_BRANCH, payload}),
+	removeLoadingBranch: (payload: string) => ({type: Types.REMOVE_LOADING_BRANCH, payload}),
+    setRepositoryBranches: (payload: {repo: string; branches: any}) => ({type: Types.SET_REPOSITORY_BRANCHES, payload}),
 	setPageNumber: (payload: number) => ({type: Types.SET_PAGE_NUMBER, payload}),
 	setLastPage: (payload: number) => ({type: Types.SET_LAST_PAGE, payload}),
 	addRepositories: (payload: IRepository[]) => ({type: Types.ADD_REPOSITORIES, payload}),
@@ -61,6 +68,29 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 			return {
 				...state,
 				list: uniqueList,
+			};
+		case Types.ADD_LOADING_BRANCH:
+			return {
+				...state,
+				loadingBranches: [...state.loadingBranches, action.payload],
+			};
+		case Types.REMOVE_LOADING_BRANCH:
+			return {
+				...state,
+				loadingBranches: state.loadingBranches.filter((item) => item !== action.payload),
+			};
+		case Types.SET_REPOSITORY_BRANCHES:
+			return {
+				...state,
+				list: state.list.map((item) => {
+                    if (item.name === action.payload.repo) {
+                    return {
+							...item,
+							branches: action.payload.branches,
+						};
+					}
+					return item;
+				}),
 			};
 		case Types.SET_PAGE_NUMBER:
 			return {
@@ -100,7 +130,7 @@ export default function reducer(state = INITIAL_STATE, action: IAction) {
 export function useRepositories(
 	organisation: string | null,
 	lastRowVisible: boolean,
-): {repositories: IRepository[]; loading: boolean} {
+): {repositories: IRepository[]; loading: boolean; loadBranches: (name: string) => void} {
 	const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
 	useDebugValue(
@@ -129,19 +159,19 @@ export function useRepositories(
 			}),
 		})
 			.then(({data}) => {
-                // If the organisation is new, set the repositories, otherwise add the repositories
+				// If the organisation is new, set the repositories, otherwise add the repositories
 				if (newOrganisation) {
 					dispatch(Actions.setRepositories(data));
 				} else {
 					dispatch(Actions.addRepositories(data));
 				}
 
-                // If the next page is not returned, assume there is no next page and increment the page number
+				// If the next page is not returned, assume there is no next page and increment the page number
 				if (data?.nextPage) {
-                    dispatch(Actions.setPageNumber(data.nextPage));
-                } else {
-                    dispatch(Actions.setPageNumber(state.lastPage + 1));
-                }
+					dispatch(Actions.setPageNumber(data.nextPage));
+				} else {
+					dispatch(Actions.setPageNumber(state.lastPage + 1));
+				}
 				if (data?.lastPage) dispatch(Actions.setLastPage(data.lastPage));
 			})
 			.catch((error: AxiosError | Error | CancelTokenStatic) => {
@@ -161,5 +191,28 @@ export function useRepositories(
 		return () => cancel?.();
 	}, [lastRowVisible, organisation]);
 
-	return {repositories: state.list, loading: state.loading};
+	const loadBranches = async (name: string) => {
+		dispatch(Actions.addLoadingBranch(name));
+
+		await apiRequest({
+			method: "GET",
+			path: `/organisation/${organisation}/repos/${name}/branches`,
+		})
+			.then((response) => {
+                dispatch(Actions.setRepositoryBranches({repo: name, branches: response.data?.data}));
+			})
+			.catch((error) => {
+                if (isAxiosError(error)) {
+                    console.warn(error.response?.status, error.response?.data);
+                    if (error.response?.data?.message) toast.error(error.response?.data?.message);
+                } else {
+                    console.warn(error);
+                    toast.error("We encountered an error getting these branches");
+                }
+			}).finally(() => {
+                dispatch(Actions.removeLoadingBranch(name));
+            });
+	};
+
+	return {repositories: state.list, loading: state.loading, loadBranches};
 }
