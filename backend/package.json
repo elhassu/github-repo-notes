@@ -6,7 +6,8 @@
 	"main": "app.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "npm run build && node --env-file=.env ./dist/index.js",
+		"start": "node --env-file=.env ./dist/index.js",
+		"dev": "npm run build && nodemon --env-file=.env ./dist/index.js",
 		"build": "tsc"
 	},
 	"author": "Keelan Vella <keelan@elhassu.com>",
